@@ -15,14 +15,24 @@ import { PieceTray } from './components/piece-tray';
 import { useGame } from './hooks/use-game';
 import { ClearEffect } from './components/clear-effect';
 import { useFeedback } from '../../services/feedback/use-feedback';
+import type { UserPreferences } from '../../services/storage/preferences-storage';
+import { DEFAULT_PREFERENCES } from '../../services/storage/preferences-storage';
 
 export interface GameScreenProps {
   readonly onHome?: (() => void) | undefined;
   readonly initialBestScore?: number | undefined;
   readonly onBestScoreChange?: ((score: number) => void) | undefined;
+  readonly preferences?: UserPreferences | undefined;
+  readonly onPreferencesChange?: ((preferences: UserPreferences) => void) | undefined;
 }
 
-export function GameScreen({ onHome, initialBestScore = 0, onBestScoreChange }: GameScreenProps = {}) {
+export function GameScreen({
+  onHome,
+  initialBestScore = 0,
+  onBestScoreChange,
+  preferences = DEFAULT_PREFERENCES,
+  onPreferencesChange,
+}: GameScreenProps = {}) {
   const { game, message, feedback, place, restart } = useGame(initialBestScore);
   const [selection, setSelection] = useState<{ piece: Piece; revision: number } | null>(null);
   const boardRef = useRef<ComponentRef<typeof View>>(null);
@@ -38,8 +48,8 @@ export function GameScreen({ onHome, initialBestScore = 0, onBestScoreChange }: 
       bounds.current = { x, y, size: measuredWidth };
     });
   }
-  const [sound, setSound] = useState(true);
-  const [vibration, setVibration] = useState(false);
+  const sound = preferences.sound;
+  const vibration = preferences.vibration;
   useFeedback(feedback, { sound, vibration });
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [confirmHome, setConfirmHome] = useState(false);
@@ -100,10 +110,12 @@ export function GameScreen({ onHome, initialBestScore = 0, onBestScoreChange }: 
           onSelect={(piece) => setSelection({ piece, revision: game.revision })} />
         <View style={styles.preferences}>
           <View style={styles.preference}><Text style={styles.preferenceText}>Sound</Text>
-            <Switch accessibilityLabel="Game sounds" value={sound} onValueChange={setSound}
+            <Switch accessibilityLabel="Game sounds" value={sound}
+              onValueChange={(val) => onPreferencesChange?.({ sound: val, vibration })}
               trackColor={{ true: theme.colors.accent, false: theme.colors.border }} /></View>
           <View style={styles.preference}><Text style={styles.preferenceText}>Vibration</Text>
-            <Switch accessibilityLabel="Game vibration" value={vibration} onValueChange={setVibration}
+            <Switch accessibilityLabel="Game vibration" value={vibration}
+              onValueChange={(val) => onPreferencesChange?.({ sound, vibration: val })}
               trackColor={{ true: theme.colors.accent, false: theme.colors.border }} /></View>
         </View>
         <Text style={styles.help}>Drag a piece onto the board, or select it and tap a cell. Fill a row or column to clear it. Use all three pieces for a fresh set.</Text>
