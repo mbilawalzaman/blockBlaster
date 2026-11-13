@@ -1,18 +1,16 @@
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { PIECE_COLORS } from '../../theme/colors';
 import { theme } from '../../theme/tokens';
 
 export interface HomeScreenProps {
   readonly onStartClassic: () => void;
+  readonly onStartAdventure: () => void;
   readonly bestScore: number;
 }
 
-export function HomeScreen({ onStartClassic, bestScore }: HomeScreenProps) {
+export function HomeScreen({ onStartClassic, onStartAdventure, bestScore }: HomeScreenProps) {
   const { width } = useWindowDimensions();
-  const [adventureModalOpen, setAdventureModalOpen] = useState(false);
   const contentWidth = Math.min(width - 40, 420);
 
   // Decorative block letters for original, playful branding
@@ -90,7 +88,7 @@ export function HomeScreen({ onStartClassic, bestScore }: HomeScreenProps) {
             accessibilityRole="button"
             accessibilityLabel="Adventure Mode, Stage Puzzles"
             style={({ pressed }) => [styles.modeButton, styles.adventureButton, pressed && styles.pressed]}
-            onPress={() => setAdventureModalOpen(true)}
+            onPress={onStartAdventure}
           >
             <View style={styles.badgeContainer}>
               <Text style={styles.badgeText}>STAGES</Text>
@@ -121,20 +119,6 @@ export function HomeScreen({ onStartClassic, bestScore }: HomeScreenProps) {
           </Pressable>
         </View>
       </View>
-
-      {/* Adventure Mode Info Modal */}
-      <ConfirmDialog
-        open={adventureModalOpen}
-        title="Adventure Mode"
-        description="Stage-based puzzles, target gems, and level challenges are coming soon in the next update! In the meantime, enjoy endless Classic mode."
-        confirmLabel="Play Classic Mode"
-        onConfirm={() => {
-          setAdventureModalOpen(false);
-          onStartClassic();
-        }}
-        onCancel={() => setAdventureModalOpen(false)}
-        cancelLabel="Back to Menu"
-      />
     </SafeAreaView>
   );
 }
