@@ -55,13 +55,12 @@ export default function App() {
     });
   }, []);
 
-  function handleBestScoreChange(nextScore: number) {
+  const handleBestScoreChange = useCallback((nextScore: number) => {
     setBestScore((prev) => {
-      const updated = Math.max(prev, nextScore);
-      void saveBestScore(updated);
-      return updated;
+      return Math.max(prev, nextScore);
     });
-  }
+    void saveBestScore(nextScore);
+  }, []);
 
   function handlePreferencesChange(nextPreferences: UserPreferences) {
     preferencesChanged.current = true;
