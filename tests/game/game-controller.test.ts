@@ -37,6 +37,19 @@ describe('game controller', () => {
     expect(reset.game.revision).toBeGreaterThan(played.game.revision);
     expect(reset.game.board.flat().every((cell) => cell === null)).toBe(true);
   });
+  it('merges a higher late-hydrated best score without overwriting current progress', () => {
+    const { state } = setup();
+    const merged = gameReducer(state, { type: 'merge-best-score', score: 350 });
+    expect(merged.game.bestScore).toBe(350);
+
+    // Stale or lower hydrated score must not reduce existing best score
+    const ignored = gameReducer(merged, { type: 'merge-best-score', score: 200 });
+    expect(ignored.game.bestScore).toBe(350);
+
+    // Invalid values are safely rejected
+    const safe = gameReducer(merged, { type: 'merge-best-score', score: -50 });
+    expect(safe.game.bestScore).toBe(350);
+  });
 });
 
 describe('move effects', () => {

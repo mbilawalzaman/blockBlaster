@@ -35,10 +35,15 @@ export async function loadPreferences(): Promise<UserPreferences> {
   }
 }
 
-export async function savePreferences(preferences: UserPreferences): Promise<void> {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
-  } catch {
-    // Gracefully handle persistence failure; gameplay continues unaffected.
-  }
+let pendingWrites: Promise<void> = Promise.resolve();
+
+export function savePreferences(preferences: UserPreferences): Promise<void> {
+  pendingWrites = pendingWrites.then(async () => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+    } catch {
+      // Gracefully handle persistence failure; gameplay continues unaffected.
+    }
+  });
+  return pendingWrites;
 }

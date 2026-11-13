@@ -33,7 +33,7 @@ export function GameScreen({
   preferences = DEFAULT_PREFERENCES,
   onPreferencesChange,
 }: GameScreenProps = {}) {
-  const { game, message, feedback, place, restart } = useGame(initialBestScore);
+  const { game, message, feedback, place, restart, mergeBestScore } = useGame(initialBestScore);
   const [selection, setSelection] = useState<{ piece: Piece; revision: number } | null>(null);
   const boardRef = useRef<ComponentRef<typeof View>>(null);
   const bounds = useRef<BoardBounds | null>(null);
@@ -56,6 +56,9 @@ export function GameScreen({
   const { width, height } = useWindowDimensions();
   const size = Math.max(160, Math.min(width - 48, height * 0.48, 420));
   const selected = selection?.revision === game.revision ? selection.piece : null;
+  useEffect(() => {
+    mergeBestScore(initialBestScore);
+  }, [initialBestScore, mergeBestScore]);
   useEffect(() => {
     finishDrag();
   }, [game.revision, width, height, confirmRestart]);

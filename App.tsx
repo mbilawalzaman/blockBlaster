@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,9 +14,12 @@ export default function App() {
   const [screen, setScreen] = useState<AppScreen>('home');
   const [bestScore, setBestScore] = useState<number>(0);
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+  const preferencesChanged = useRef(false);
 
   useEffect(() => {
-    void loadPreferences().then(setPreferences);
+    void loadPreferences().then((storedPreferences) => {
+      if (!preferencesChanged.current) setPreferences(storedPreferences);
+    });
     void loadBestScore().then((persistedScore) => {
       setBestScore((prev) => Math.max(prev, persistedScore));
     });
@@ -31,6 +34,7 @@ export default function App() {
   }
 
   function handlePreferencesChange(nextPreferences: UserPreferences) {
+    preferencesChanged.current = true;
     setPreferences(nextPreferences);
     void savePreferences(nextPreferences);
   }

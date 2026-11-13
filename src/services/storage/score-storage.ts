@@ -4,12 +4,9 @@ const SCORE_STORAGE_KEY = '@block_puzzle/best_score_v1';
 
 export function parseBestScore(raw: unknown): number {
   if (typeof raw !== 'string') return 0;
-  try {
-    const value = Number.parseInt(raw, 10);
-    return Number.isSafeInteger(value) && value >= 0 ? value : 0;
-  } catch {
-    return 0;
-  }
+  if (!/^\d+$/.test(raw)) return 0;
+  const value = Number(raw);
+  return Number.isSafeInteger(value) ? value : 0;
 }
 
 export async function loadBestScore(): Promise<number> {
@@ -21,14 +18,18 @@ export async function loadBestScore(): Promise<number> {
   }
 }
 
-let latestPersistedScore = 0;
+let pendingWrites: Promise<void> = Promise.resolve();
 
-export async function saveBestScore(score: number): Promise<void> {
-  if (!Number.isSafeInteger(score) || score <= latestPersistedScore) return;
-  try {
-    latestPersistedScore = score;
-    await AsyncStorage.setItem(SCORE_STORAGE_KEY, score.toString());
-  } catch {
-    // Graceful fallback: persistence failure never blocks game play.
-  }
+export function saveBestScore(score: number): Promise<void> {
+  if (!Number.isSafeInteger(score) || score < 0) return Promise.resolve();
+  pendingWrites = pendingWrites.then(async () => {
+    try {
+      const stored = parseBestScore(await AsyncStorage.getItem(SCORE_STORAGE_KEY));
+      const best = Math.max(stored, score);
+      if (best > stored) await AsyncStorage.setItem(SCORE_STORAGE_KEY, best.toString());
+    } catch {
+      // Persistence failures must not affect gameplay; a later score change can retry.
+    }
+  });
+  return pendingWrites;
 }
