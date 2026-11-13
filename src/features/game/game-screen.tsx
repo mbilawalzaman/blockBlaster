@@ -16,8 +16,14 @@ import { useGame } from './hooks/use-game';
 import { ClearEffect } from './components/clear-effect';
 import { useFeedback } from '../../services/feedback/use-feedback';
 
-export function GameScreen() {
-  const { game, message, feedback, place, restart } = useGame();
+export interface GameScreenProps {
+  readonly onHome?: (() => void) | undefined;
+  readonly initialBestScore?: number | undefined;
+  readonly onBestScoreChange?: ((score: number) => void) | undefined;
+}
+
+export function GameScreen({ onHome, initialBestScore = 0, onBestScoreChange }: GameScreenProps = {}) {
+  const { game, message, feedback, place, restart } = useGame(initialBestScore);
   const [selection, setSelection] = useState<{ piece: Piece; revision: number } | null>(null);
   const boardRef = useRef<ComponentRef<typeof View>>(null);
   const bounds = useRef<BoardBounds | null>(null);
@@ -36,12 +42,16 @@ export function GameScreen() {
   const [vibration, setVibration] = useState(false);
   useFeedback(feedback, { sound, vibration });
   const [confirmRestart, setConfirmRestart] = useState(false);
+  const [confirmHome, setConfirmHome] = useState(false);
   const { width, height } = useWindowDimensions();
   const size = Math.max(160, Math.min(width - 48, height * 0.48, 420));
   const selected = selection?.revision === game.revision ? selection.piece : null;
   useEffect(() => {
     finishDrag();
   }, [game.revision, width, height, confirmRestart]);
+  useEffect(() => {
+    onBestScoreChange?.(game.bestScore);
+  }, [game.bestScore, onBestScoreChange]);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       setSuspended(state !== 'active');
@@ -63,7 +73,8 @@ export function GameScreen() {
       scrollEventThrottle={16} contentContainerStyle={styles.scroll}>
       <View style={[styles.content, { width: Math.min(width - 32, 468) }]}>
         <GameHeader score={game.score} bestScore={game.bestScore} combo={game.combo}
-          onRestart={() => game.score > 0 ? setConfirmRestart(true) : reset()} />
+          onRestart={() => game.score > 0 ? setConfirmRestart(true) : reset()}
+          onHome={onHome ? () => (game.score > 0 ? setConfirmHome(true) : onHome()) : undefined} />
         <View ref={boardRef} collapsable={false} onLayout={measureBoard} style={styles.boardContainer}><GameBoard board={game.board} size={size}
           preview={preview} draggedPiece={drag.current?.piece ?? null} selected={selected} disabled={game.gameOver || confirmRestart || suspended || dragging}
           onPlace={(row, col) => { if (selected && selection) place({ pieceId: selected.id,
@@ -98,9 +109,14 @@ export function GameScreen() {
         <Text style={styles.help}>Drag a piece onto the board, or select it and tap a cell. Fill a row or column to clear it. Use all three pieces for a fresh set.</Text>
       </View>
     </ScrollView>
-    <ConfirmDialog open={confirmRestart} title="Start a fresh mosaic?"
+    <ConfirmDialog open={confirmRestart} title="Start a fresh game?"
       description="Your current board and score will reset. Your session best stays."
       confirmLabel="Restart game" onConfirm={reset} onCancel={() => setConfirmRestart(false)} />
+    <ConfirmDialog open={confirmHome} title="Return to Menu?"
+      description="Your current puzzle progress will be lost. Return to the home screen?"
+      confirmLabel="Exit to Menu" cancelLabel="Keep playing"
+      onConfirm={() => { setConfirmHome(false); onHome?.(); }}
+      onCancel={() => setConfirmHome(false)} />
     <GameOverModal open={game.gameOver} score={game.score} bestScore={game.bestScore} onReplay={reset} />
   </SafeAreaView>;
 }

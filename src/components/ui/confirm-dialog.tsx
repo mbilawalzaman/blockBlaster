@@ -8,9 +8,10 @@ export interface ConfirmDialogProps {
   readonly description: string;
   readonly confirmLabel: string;
   readonly onConfirm: () => void;
-  readonly onCancel?: () => void;
+  readonly onCancel?: (() => void) | undefined;
+  readonly cancelLabel?: string | undefined;
 }
-export function ConfirmDialog({ open, title, description, confirmLabel, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({ open, title, description, confirmLabel, onConfirm, onCancel, cancelLabel = 'Keep playing' }: ConfirmDialogProps) {
   return <Modal visible={open} transparent animationType="none"
     onRequestClose={onCancel ?? (() => undefined)}>
     <View style={styles.overlay} accessibilityViewIsModal>
@@ -19,7 +20,7 @@ export function ConfirmDialog({ open, title, description, confirmLabel, onConfir
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.description}>{description}</Text>
           <Button label={confirmLabel} onPress={onConfirm} />
-          {onCancel && <Button secondary label="Keep playing" onPress={onCancel} />}
+          {onCancel && <Button secondary label={cancelLabel} onPress={onCancel} />}
         </View>
       </ScrollView>
     </View>

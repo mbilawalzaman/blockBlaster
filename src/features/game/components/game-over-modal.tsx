@@ -4,7 +4,7 @@ export interface GameOverModalProps {
   readonly onReplay: () => void;
 }
 export function GameOverModal({ open, score, bestScore, onReplay }: GameOverModalProps) {
-  return <ConfirmDialog open={open} title="A lovely little mosaic."
+  return <ConfirmDialog open={open} title="Game Over"
     description={`No pieces fit. You scored ${score} points. Session best: ${bestScore}. Ready for a fresh board?`}
     confirmLabel="Play again" onConfirm={onReplay} />;
 }

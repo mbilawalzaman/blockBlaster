@@ -4,9 +4,9 @@ import type { Move } from '../../../game/types';
 import { gameReducer } from '../game-controller';
 import type { ControllerState } from '../game-controller';
 
-export function useGame() {
+export function useGame(initialBestScore = 0) {
   const [state, dispatch] = useReducer(gameReducer, undefined, (): ControllerState => ({
-    game: createGame(Date.now()), message: 'Pick a piece, then tap its top-left board cell.',
+    game: createGame(Date.now(), initialBestScore), message: 'Pick a piece, then tap its top-left board cell.',
   }));
   return { ...state,
     place: (move: Move) => dispatch({ type: 'place', move }),
